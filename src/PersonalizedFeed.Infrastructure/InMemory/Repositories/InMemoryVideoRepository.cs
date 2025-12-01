@@ -27,4 +27,25 @@ public sealed class InMemoryVideoRepository : IVideoRepository
 
         return Task.FromResult<IReadOnlyList<Video>>(videos);
     }
+
+    public Task<Video?> GetByIdAsync(string tenantId, string videoId, CancellationToken cancellationToken = default)
+    {
+        var key = (tenantId, videoId);
+        var video = _store.Videos.GetValueOrDefault(key);
+
+        return Task.FromResult(video);
+    }
+
+    public Task<IReadOnlyList<Video>> GetByIdsAsync(string tenantId, IReadOnlyCollection<string> videoIds, CancellationToken cancellationToken = default)
+    {
+        var idSet = videoIds.ToHashSet();
+
+        var videos = _store.Videos
+            .Values
+            .Where(v => v.TenantId == tenantId && idSet.Contains(v.VideoId))
+            .ToList()
+            .AsReadOnly();
+
+        return Task.FromResult<IReadOnlyList<Video>>(videos);
+    }
 }

@@ -2,6 +2,7 @@
 using PersonalizedFeed.Domain.Repositories;
 using PersonalizedFeed.Infrastructure.InMemory;
 using PersonalizedFeed.Infrastructure.InMemory.Repositories;
+using PersonalizedFeed.Infrastructure.Messaging;
 
 namespace PersonalizedFeed.Infrastructure;
 
@@ -15,6 +16,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISystemConfigRepository, InMemorySystemConfigRepository>();
         services.AddScoped<IUserSignalsRepository, InMemoryUserSignalsRepository>();
         services.AddScoped<IVideoRepository, InMemoryVideoRepository>();
+
+        services.AddSingleton<IUserEventQueue, InMemoryUserEventQueue>();
 
         return services;
     }

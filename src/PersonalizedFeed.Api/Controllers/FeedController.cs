@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PersonalizedFeed.Api.Contracts;
+using PersonalizedFeed.Api.Helpers;
 using PersonalizedFeed.Domain.Services;
 using PersonalizedFeed.Domain.Services.Models;
 
@@ -28,13 +29,7 @@ public class FeedController : ControllerBase
             string.IsNullOrWhiteSpace(apiKey) ||
             string.IsNullOrWhiteSpace(userHash))
         {
-            List<string> missingHeaders = new List<string>();
-            if (string.IsNullOrWhiteSpace(tenantId)) missingHeaders.Add("X-Tenant-Id");
-            if (string.IsNullOrWhiteSpace(apiKey)) missingHeaders.Add("X-Api-Key");
-            if (string.IsNullOrWhiteSpace(userHash)) missingHeaders.Add("X-User");
-
-            string headerOrHeaders = missingHeaders.Count > 1 ? "headers" : "header";
-            string errorMessage = $"Missing required {headerOrHeaders}: {string.Join(", ", missingHeaders)}";
+            var errorMessage = ErrorMessageHelpers.ConstructMissingHeadersMessage(tenantId, apiKey, userHash);
 
             return BadRequest(new
             {

@@ -8,4 +8,14 @@ public interface IVideoRepository
         string tenantId,
         int maxCount,
         CancellationToken cancellationToken = default);
+
+    Task<Video?> GetByIdAsync(
+        string tenantId,
+        string videoId,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Video>> GetByIdsAsync(
+        string tenantId,
+        IReadOnlyCollection<string> videoIds,
+        CancellationToken cancellationToken = default);
 }

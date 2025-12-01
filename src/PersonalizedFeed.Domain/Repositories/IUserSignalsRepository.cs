@@ -8,4 +8,7 @@ public interface IUserSignalsRepository
         string tenantId,
         string userHash,
         CancellationToken cancellationToken = default);
+    Task SaveAsync(
+        UserSignals signals,
+        CancellationToken cancellationToken = default);
 }

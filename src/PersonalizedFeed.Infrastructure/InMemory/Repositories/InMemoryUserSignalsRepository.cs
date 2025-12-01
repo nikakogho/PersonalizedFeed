@@ -21,4 +21,11 @@ public sealed class InMemoryUserSignalsRepository : IUserSignalsRepository
         _store.UserSignals.TryGetValue(key, out var signals);
         return Task.FromResult<UserSignals?>(signals);
     }
+
+    public Task SaveAsync(UserSignals signals, CancellationToken cancellationToken = default)
+    {
+        var key = (signals.TenantId, signals.UserHash);
+        _store.UserSignals[key] = signals;
+        return Task.CompletedTask;
+    }
 }
