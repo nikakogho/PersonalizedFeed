@@ -1,5 +1,6 @@
 ﻿using PersonalizedFeed.Domain.Models;
 using PersonalizedFeed.Domain.Ranking;
+using PersonalizedFeed.Domain.Ranking.Models;
 using Shouldly;
 using System.Text.Json;
 

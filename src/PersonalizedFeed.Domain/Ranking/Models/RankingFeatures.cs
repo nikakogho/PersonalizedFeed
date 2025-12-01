@@ -1,4 +1,4 @@
-﻿namespace PersonalizedFeed.Domain.Ranking;
+﻿namespace PersonalizedFeed.Domain.Ranking.Models;
 
 public sealed record RankingFeatures(
     string TenantId,

@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using PersonalizedFeed.Domain.Ranking.Models;
+using System.Text.Json;
 
 namespace PersonalizedFeed.Domain.Ranking;
 

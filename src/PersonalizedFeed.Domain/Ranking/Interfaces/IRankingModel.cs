@@ -1,4 +1,6 @@
-﻿namespace PersonalizedFeed.Domain.Ranking;
+﻿using PersonalizedFeed.Domain.Ranking.Models;
+
+namespace PersonalizedFeed.Domain.Ranking;
 
 public interface IRankingModel
 {

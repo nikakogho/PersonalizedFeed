@@ -1,4 +1,5 @@
 ﻿using PersonalizedFeed.Domain.Models;
+using PersonalizedFeed.Domain.Ranking.Models;
 
 namespace PersonalizedFeed.Domain.Ranking;
 
