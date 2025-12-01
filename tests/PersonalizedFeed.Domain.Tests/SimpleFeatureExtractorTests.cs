@@ -1,5 +1,6 @@
 ﻿using PersonalizedFeed.Domain.Models;
 using PersonalizedFeed.Domain.Ranking;
+using Shouldly;
 
 namespace PersonalizedFeed.Domain.Tests;
 
@@ -54,19 +55,19 @@ public class SimpleFeatureExtractorTests
         var features = extractor.ToFeatures(tenant, user, video, now);
 
         // Assert
-        Assert.Equal("tenant_1", features.TenantId);
-        Assert.Equal(string.Empty, features.UserHash);
-        Assert.Equal("vid_1", features.VideoId);
-        Assert.Equal("fitness", features.MainTag);
+        features.TenantId.ShouldBe("tenant_1");
+        features.UserHash.ShouldBeEmpty();
+        features.VideoId.ShouldBe("vid_1");
+        features.MainTag.ShouldBe("fitness");
 
-        Assert.Equal(0.0, features.CategoryAffinity);
-        Assert.Equal(0.0, features.UserWatchTimeLast7d);
-        Assert.Equal(0.0, features.UserSkipRateLast7d);
+        features.CategoryAffinity.ShouldBe(0.0);
+        features.UserWatchTimeLast7d.ShouldBe(0.0);
+        features.UserSkipRateLast7d.ShouldBe(0.0);
 
-        Assert.True(features.RecencyHours >= 1 && features.RecencyHours <= 3);
-        Assert.Equal(10.0, features.GlobalPopularityScore);
-        Assert.Equal(1.0, features.EditorialBoost);
-        Assert.False(features.IsMatureContent);
+        features.RecencyHours.ShouldBeInRange(1.0, 3.0);
+        features.GlobalPopularityScore.ShouldBe(10.0);
+        features.EditorialBoost.ShouldBe(1.0);
+        features.IsMatureContent.ShouldBeFalse();
     }
 
     [Fact]
@@ -106,12 +107,12 @@ public class SimpleFeatureExtractorTests
         Assert.Equal("user_hash_123", features.UserHash);
 
         // CategoryAffinity = fitnessViews / totalViews = 8 / 10 = 0.8
-        Assert.InRange(features.CategoryAffinity, 0.79, 0.81);
+        features.CategoryAffinity.ShouldBeInRange(0.79, 0.81);
 
         // Watch time seconds ≈ 130_000 / 1000 = 130
-        Assert.InRange(features.UserWatchTimeLast7d, 129.0, 131.0);
+        features.UserWatchTimeLast7d.ShouldBeInRange(129.0, 131.0);
 
-        Assert.Equal(0.1, features.UserSkipRateLast7d, precision: 3);
+        features.UserSkipRateLast7d.ShouldBe(0.1, tolerance: 0.001);
     }
 
     [Fact]
@@ -140,6 +141,6 @@ public class SimpleFeatureExtractorTests
         var features = extractor.ToFeatures(tenant, user, matureVideo, now);
 
         // Assert
-        Assert.True(features.IsMatureContent);
+        features.IsMatureContent.ShouldBeTrue();
     }
 }

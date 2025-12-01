@@ -1,5 +1,6 @@
 ﻿using PersonalizedFeed.Domain.Models;
 using PersonalizedFeed.Domain.Ranking;
+using Shouldly;
 using System.Text.Json;
 
 namespace PersonalizedFeed.Domain.Tests;
@@ -110,8 +111,8 @@ public class RankerIntegrationTests
             limit: 2);
 
         // Assert
-        Assert.Equal(2, ranked.Count);
-        Assert.Equal("vid_fitness", ranked[0].Video.VideoId);
-        Assert.Equal("vid_cooking", ranked[1].Video.VideoId);
+        ranked.Count.ShouldBe(2);
+        ranked[0].Video.VideoId.ShouldBe("vid_fitness");
+        ranked[1].Video.VideoId.ShouldBe("vid_cooking");
     }
 }

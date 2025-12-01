@@ -1,4 +1,5 @@
 ﻿using PersonalizedFeed.Domain.Ranking;
+using Shouldly;
 using System.Text.Json;
 
 namespace PersonalizedFeed.Domain.Tests;
@@ -42,6 +43,6 @@ public class LinearRankingModelTests
         var score = model.Score(features, definition);
 
         const double expected = 7.06;
-        Assert.Equal(expected, score, precision: 2);
+        score.ShouldBe(expected, tolerance: 0.01);
     }
 }
