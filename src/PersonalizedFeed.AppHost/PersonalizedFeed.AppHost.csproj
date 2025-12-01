@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PersonalizedFeed.Api\PersonalizedFeed.Api.csproj" />
+    <ProjectReference Include="..\PersonalizedFeed.Worker\PersonalizedFeed.Worker.csproj" />
   </ItemGroup>
 
 </Project>
