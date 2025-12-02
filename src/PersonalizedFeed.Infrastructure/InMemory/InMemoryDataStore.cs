@@ -53,7 +53,7 @@ public sealed class InMemoryDataStore
         var fitnessVideo = new Video
         {
             TenantId = tenantId,
-            VideoId = "vid_fitness",
+            VideoId = "vid_fitness_1",
             PlaybackUrl = "https://cdn.example.com/v/vid_fitness.m3u8",
             ThumbnailUrl = null,
             Title = "Fitness warmup",
@@ -71,7 +71,7 @@ public sealed class InMemoryDataStore
         var cookingVideo = new Video
         {
             TenantId = tenantId,
-            VideoId = "vid_cooking",
+            VideoId = "vid_cooking_1",
             PlaybackUrl = "https://cdn.example.com/v/vid_cooking.m3u8",
             ThumbnailUrl = null,
             Title = "Cooking pasta",
