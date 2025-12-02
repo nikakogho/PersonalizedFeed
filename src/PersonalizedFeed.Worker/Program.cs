@@ -6,6 +6,8 @@ using PersonalizedFeed.Worker;
 
 var builder = Host.CreateApplicationBuilder(args);
 
+builder.AddServiceDefaults();
+
 // Domain services
 builder.Services.AddScoped<IFeatureExtractor, SimpleFeatureExtractor>();
 builder.Services.AddScoped<IRankingModel, LinearRankingModel>();

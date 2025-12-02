@@ -1,4 +1,5 @@
 ﻿using PersonalizedFeed.Domain.Models;
+using PersonalizedFeed.Domain.Policies;
 using PersonalizedFeed.Domain.Repositories;
 
 namespace PersonalizedFeed.Infrastructure.InMemory.Repositories;
@@ -15,10 +16,11 @@ public sealed class InMemoryVideoRepository : IVideoRepository
     public Task<IReadOnlyList<Video>> GetCandidateVideosAsync(
         string tenantId,
         int maxCount,
+        string maturityPolicy,
         CancellationToken cancellationToken = default)
     {
         var videos = _store.Videos.Values
-            .Where(v => v.TenantId == tenantId && v.IsActive)
+            .Where(v => v.TenantId == tenantId && v.IsActive && MaturityRatingPolicy.IsAllowed(v.MaturityRating, maturityPolicy))
             .OrderByDescending(v => v.GlobalPopularityScore)
             .ThenByDescending(v => v.CreatedAt)
             .Take(maxCount)

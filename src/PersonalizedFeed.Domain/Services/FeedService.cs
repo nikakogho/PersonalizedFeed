@@ -72,6 +72,7 @@ public sealed class FeedService : IFeedService
         var candidates = await _videos.GetCandidateVideosAsync(
             request.TenantId,
             DefaultCandidatePoolSize,
+            tenant.MaturityPolicy,
             cancellationToken);
 
         var rankingDefinition = CreateModelDefinition(tenant);

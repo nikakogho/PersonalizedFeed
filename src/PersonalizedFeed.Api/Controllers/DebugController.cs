@@ -8,6 +8,7 @@ namespace PersonalizedFeed.Api.Controllers;
 public class DebugController : ControllerBase
 {
     private readonly IUserSignalsRepository _userSignalsRepository;
+    private readonly ITenantConfigRepository _tenantConfigRepository;
 
     public DebugController(IUserSignalsRepository userSignalsRepository)
     {
@@ -46,5 +47,26 @@ public class DebugController : ControllerBase
 
         // For debug purposes we can just return the domain object as-is
         return Ok(signals);
+    }
+
+    [HttpPost("set-personalization")]
+    public async Task<IActionResult> SetPersonalization(
+        [FromHeader(Name = "X-Tenant-Id")] string? tenantId,
+        [FromHeader(Name = "X-Api-Key")] string? apiKey,
+        [FromQuery] bool enable,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(tenantId) ||
+            string.IsNullOrWhiteSpace(apiKey))
+        {
+            return BadRequest(new
+            {
+                error = "Missing X-Tenant-Id or X-Api-Key header."
+            });
+        }
+
+        await _tenantConfigRepository.SetPersonalizationAsync(tenantId, apiKey, enable, ct);
+
+        return Ok();
     }
 }

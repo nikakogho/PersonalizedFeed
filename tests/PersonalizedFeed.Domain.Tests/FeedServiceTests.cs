@@ -45,6 +45,7 @@ public class FeedServiceTests
             .Setup(x => x.GetCandidateVideosAsync(
                 "tenant_1",
                 It.IsAny<int>(),
+                It.IsAny<string>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(candidates);
 
@@ -111,6 +112,7 @@ public class FeedServiceTests
             .Setup(x => x.GetCandidateVideosAsync(
                 "tenant_1",
                 It.IsAny<int>(),
+                It.IsAny<string>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(candidates);
 
@@ -232,5 +234,77 @@ public class FeedServiceTests
         };
 
         return new[] { fitness, cooking };
+    }
+
+    [Fact]
+    public async Task FeedService_PassesTenantMaturityPolicyToVideoRepository()
+    {
+        // Arrange
+        var tenantConfig = CreateTenantConfigWithStrongCategoryWeight();
+        tenantConfig = tenantConfig with { MaturityPolicy = "PG13" };
+
+        var userSignals = CreateUserSignalsWithFitnessPreference();
+        var candidates = CreateCandidateVideos();
+
+        var tenantRepo = new Mock<ITenantConfigRepository>();
+        tenantRepo
+            .Setup(x => x.GetByTenantIdAndApiKeyAsync(
+                "tenant_1",
+                "secret-api-key",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(tenantConfig);
+
+        var systemConfigRepo = new Mock<ISystemConfigRepository>();
+        systemConfigRepo
+            .Setup(x => x.IsPersonalizationGloballyEnabledAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var userSignalsRepo = new Mock<IUserSignalsRepository>();
+        userSignalsRepo
+            .Setup(x => x.GetByTenantAndUserHashAsync(
+                "tenant_1",
+                "user_hash_123",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userSignals);
+
+        var videoRepo = new Mock<IVideoRepository>();
+        videoRepo
+            .Setup(x => x.GetCandidateVideosAsync(
+                "tenant_1",
+                It.IsAny<int>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(candidates);
+
+        var featureExtractor = new SimpleFeatureExtractor();
+        var rankingModel = new LinearRankingModel();
+        var diversifier = new SimpleFeedDiversifier(
+            maxTitleSimilarity: 0.99,
+            maxSameMainTagInRow: 5);
+        var ranker = new Ranker(featureExtractor, rankingModel, diversifier);
+
+        var service = new FeedService(
+            tenantRepo.Object,
+            systemConfigRepo.Object,
+            userSignalsRepo.Object,
+            videoRepo.Object,
+            ranker);
+
+        var request = new FeedRequest(
+            TenantId: "tenant_1",
+            ApiKey: "secret-api-key",
+            UserHash: "user_hash_123",
+            Limit: 10);
+
+        // Act
+        await service.GetFeedAsync(request);
+
+        // Assert – ensure we pass the exact maturity policy down
+        videoRepo.Verify(v => v.GetCandidateVideosAsync(
+                "tenant_1",
+                It.IsAny<int>(),
+                "PG13",
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 }

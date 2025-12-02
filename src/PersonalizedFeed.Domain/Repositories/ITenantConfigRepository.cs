@@ -8,4 +8,10 @@ public interface ITenantConfigRepository
         string tenantId,
         string apiKey,
         CancellationToken cancellationToken = default);
+
+    Task SetPersonalizationAsync(
+        string tenantId,
+        string apiKey,
+        bool enable,
+        CancellationToken cancellationToken = default);
 }

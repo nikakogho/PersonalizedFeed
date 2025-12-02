@@ -7,6 +7,7 @@ public interface IVideoRepository
     Task<IReadOnlyList<Video>> GetCandidateVideosAsync(
         string tenantId,
         int maxCount,
+        string maturityPolicy,
         CancellationToken cancellationToken = default);
 
     Task<Video?> GetByIdAsync(

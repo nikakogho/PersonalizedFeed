@@ -25,4 +25,19 @@ public sealed class InMemoryTenantConfigRepository : ITenantConfigRepository
 
         return Task.FromResult<TenantConfig?>(tenant);
     }
+
+    public Task SetPersonalizationAsync(string tenantId, string apiKey, bool enable, CancellationToken cancellationToken = default)
+    {
+        if (!_store.Tenants.TryGetValue(tenantId, out var tenant))
+            throw new ArgumentException($"Tenant with ID '{tenantId}' does not exist.", nameof(tenantId));
+
+        if (!string.Equals(tenant.ApiKey, apiKey, StringComparison.Ordinal))
+            throw new UnauthorizedAccessException("Invalid API key.");
+
+        var updatedTenant = tenant with { UsePersonalization = enable };
+
+        _store.Tenants[tenantId] = updatedTenant;
+
+        return Task.CompletedTask;
+    }
 }
