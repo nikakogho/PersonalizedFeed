@@ -16,12 +16,13 @@ Implementation is in **.NET 8**, using plain **ASP.NET Core + Worker services**,
 
 ## 1. Architecture overview
 
+```mermaid
 graph TD
     Client[Mobile SDK]
     LB[Load Balancer]
     API[Feed API .NET 8]
     Worker[Events Worker]
-    
+
     subgraph Data Stores
         Redis[(Azure Redis)]
         SQL[(Azure SQL)]
@@ -34,7 +35,7 @@ graph TD
     API -- 1. Check Config --> Redis
     API -- 2. Get Candidates --> Redis
     API -- 3. Get User Signals --> Redis
-    
+
     %% Write Path
     Client -- POST /events --> LB --> API
     API -- Async Batch --> ServiceBus
@@ -42,6 +43,7 @@ graph TD
     Worker -- Atomic Update --> SQL
     Worker -- Update Cache --> Redis
     Worker -- Archive Raw --> Blob
+```
 
 ### 1.1 Core components
 
