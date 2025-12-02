@@ -96,7 +96,7 @@ graph TD
     Retriever --> Filter
     Filter -- "Drop disallowed ratings" --> Scorer
     Scorer -- "Compute Score (Linear Model)" --> Diversifier
-    Diversifier -- "Remove duplicates" --> API_Endpoint
+    Diversifier -- "Remove too similars" --> API_Endpoint
     API_Endpoint -- "JSON Response" --> SDK
 
     %% 2. WRITE PATH (Events)
