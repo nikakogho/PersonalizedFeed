@@ -45,6 +45,86 @@ graph TD
     Worker -- Archive Raw --> Blob
 ```
 
+More detailed version:
+
+```mermaid
+graph TD
+    %% Actors
+    SDK[Mobile SDK]
+    CMS[CMS / Content Mgr]
+
+    %% Load Balancer / Entry
+    LB[Load Balancer]
+
+    %% Services
+    subgraph "Feed API Service (Read & Ingest)"
+        API_Endpoint[API Endpoint]
+        
+        subgraph "Ranking Pipeline (In-Memory)"
+            Retriever[1. Candidate Retrieval]
+            Filter[2. Maturity Filter]
+            Scorer[3. Feature Extractor & Scorer]
+            Diversifier[4. Diversification]
+        end
+    end
+
+    subgraph "Background Processing"
+        Worker[Events Worker]
+    end
+
+    %% Data Stores
+    subgraph "Data & State Layer (VNet)"
+        Redis[(Azure Redis Cache)]
+        SQL[(Azure SQL)]
+        ServiceBus{Azure Service Bus}
+        Blob[Blob Storage]
+    end
+
+    %% --- FLOWS ---
+
+    %% 1. READ PATH (The Feed)
+    SDK -- "GET /v1/feed" --> LB --> API_Endpoint
+    API_Endpoint --> Retriever
+    
+    %% Retrieval from Pre-computed Sets
+    Retriever -- "Fetch Top 500 IDs (Popular/Fresh)" --> Redis
+    
+    %% User Signals & Config
+    Retriever -- "Fetch User Signals & Tenant Config" --> Redis
+    
+    %% Processing
+    Retriever --> Filter
+    Filter -- "Drop disallowed ratings" --> Scorer
+    Scorer -- "Compute Score (Linear Model)" --> Diversifier
+    Diversifier -- "Remove duplicates" --> API_Endpoint
+    API_Endpoint -- "JSON Response" --> SDK
+
+    %% 2. WRITE PATH (Events)
+    SDK -- "POST /v1/events/batch" --> LB --> API_Endpoint
+    API_Endpoint -- "Publish Batch" --> ServiceBus
+    ServiceBus -- "Dequeue" --> Worker
+    
+    Worker -- "Atomic Update (VideoStats)" --> Redis
+    Worker -- "Update UserSignals (Capped)" --> Redis
+    Worker -- "Persist Aggregates" --> SQL
+    Worker -- "Archive Raw Events (90 days)" --> Blob
+
+    %% 3. CMS CONFIG PATH
+    CMS -- "Update Videos / Weights / Policy" --> SQL
+    CMS -.->|"Invalidate Cache"| Redis
+
+    %% Styling
+    classDef actor fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef service fill:#d4e1f5,stroke:#333,stroke-width:2px;
+    classDef data fill:#fff5ad,stroke:#333,stroke-width:2px;
+    classDef pipe fill:#e1f5d4,stroke:#333,stroke-dasharray: 5 5;
+
+    class SDK,CMS actor;
+    class API_Endpoint,Worker,Retriever,Filter,Scorer,Diversifier service;
+    class Redis,SQL,ServiceBus,Blob data;
+    class Retriever,Filter,Scorer,Diversifier pipe;
+```
+
 ### 1.1 Core components
 
 **Mobile SDK**
