@@ -29,7 +29,8 @@ Implementation is in **.NET 8**, using plain **ASP.NET Core + Worker services**,
 
 * Validates tenant + API key + hashed user ID headers.
 * Loads `TenantConfig` and `UserSignals`.
-* Fetches candidate videos with maturity filtering.
+* Fetches candidate videos with lightweight retrieval + maturity filtering.
+  * We assume the globally popular tenant-specific set of 500 or fewer videos are fetched here.
 * Runs ranking pipeline (feature extraction → model → diversification).
 * Returns ranked feed with mode `personalized` or `fallback`.
 * Accepts batched user events and forwards them into the ingestion pipeline via `IUserEventSink`:
@@ -46,6 +47,8 @@ Implementation is in **.NET 8**, using plain **ASP.NET Core + Worker services**,
   * update `UserSignals`,
   * update `VideoStats`,
   * optionally append raw events to blob storage.
+
+  * All these operations are atomic to ensure concurrent workers don't step on each other's toes.
 
 **Data stores (production design)**
 
@@ -571,6 +574,12 @@ With additional time, the CMS-facing part would gain:
 * **Why:** feeds are highly dynamic and user-specific; caching introduces invalidation complexity that doesn’t help this prototype.
 * **Future:** consider caching for non-personalized variants or aggressive per-session caching.
 
+## User Signals Capped Affinity Categories
+
+* **Decision:** must cap the number of categories stored in `UserSignals.CategoryStats`
+* **Why:** prevents unbounded growth of user signals for users who explore many categories; keeps memory and storage usage predictable
+* **Future:** implement LRU or frequency-based eviction to retain the most relevant categories
+
 ---
 
 ## 6. Rollout, logging & observability
@@ -784,7 +793,7 @@ Given more time, the next steps would be:
 
    * Add `Infrastructure.Sql` project backed by Azure SQL (or SQLite locally).
    * Add Redis-backed implementations of `ITenantConfigRepository`, `IUserSignalsRepository`.
-   * Wire the app to real Azure resources via Aspire AppHost (SQL, Redis, Service Bus, Blob).
+   * Wire the app to real Azure resources via Aspire AppHost (SQL, Redis, Service Bus, Blob, Application Insights).
 
 2. **Improve ranking models**
 
@@ -808,5 +817,18 @@ Given more time, the next steps would be:
    * Rate limiting for `/v1/feed` and `/v1/events/batch`.
    * Alerting on latency SLO violations, queue lag, error rates.
    * Stronger API key management (rotation, scoping, maybe tenant-specific rate limits).
+
+6. **Horizontal Scaling**
+
+   * Scale both API and Worker if load demands it
+
+7. **Improved Observability**
+
+  * More detailed logging
+  * Dashboards and alerts around p95 and p99 latencies
+
+8. **Different Feed Pagination**
+
+  * Token-based or snapshot approach to either keep track of what videos this user has recently seen or keep track of last fetched video score
 
 The current prototype intentionally keeps the **core domain model, ranking pipeline, and configuration story stable**, so these extensions are incremental rather than requiring a redesign.
