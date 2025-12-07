@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 using PersonalizedFeed.Api.Contracts;
 using PersonalizedFeed.Api.Helpers;
 using PersonalizedFeed.Api.Messaging;
@@ -11,10 +12,12 @@ namespace PersonalizedFeed.Api.Controllers;
 public class EventsController : ControllerBase
 {
     private readonly IUserEventSink _eventSink;
+    private readonly IDistributedCache _cache;
 
-    public EventsController(IUserEventSink eventSink)
+    public EventsController(IUserEventSink eventSink, IDistributedCache cache)
     {
         _eventSink = eventSink;
+        _cache = cache;
     }
 
     [HttpPost("batch")]
@@ -22,19 +25,28 @@ public class EventsController : ControllerBase
         [FromHeader(Name = "X-Tenant-Id")] string? tenantId,
         [FromHeader(Name = "X-Api-Key")] string? apiKey,
         [FromHeader(Name = "X-User")] string? userHash,
+        [FromHeader(Name = "X-Idempotency-Key")] string? idempotencyKey,
         [FromBody] UserEventBatchRequest request,
         CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(tenantId) ||
             string.IsNullOrWhiteSpace(apiKey) ||
-            string.IsNullOrWhiteSpace(userHash))
+            string.IsNullOrWhiteSpace(userHash) ||
+            string.IsNullOrWhiteSpace(idempotencyKey))
         {
-            var errorMessage = ErrorMessageHelpers.ConstructMissingHeadersMessage(tenantId, apiKey, userHash);
+            var errorMessage = ErrorMessageHelpers.ConstructMissingHeadersMessage(tenantId, apiKey, userHash, idempotencyKey);
 
             return BadRequest(new
             {
                 error = errorMessage
             });
+        }
+
+        var cacheKey = $"idempotency:{tenantId}:{idempotencyKey}";
+        var cachedValue = await _cache.GetStringAsync(cacheKey, ct);
+        if (!string.IsNullOrEmpty(cachedValue))
+        {
+            return Accepted();
         }
 
         if (request.Events is null || request.Events.Count == 0)
@@ -68,6 +80,12 @@ public class EventsController : ControllerBase
             Events: events);
 
         await _eventSink.HandleAsync(batch, ct);
+
+        await _cache.SetStringAsync(
+            cacheKey,
+            "processed",
+            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24) },
+            ct);
 
         // Looks async even in local mode; Inline sink does it inline
         return Accepted();

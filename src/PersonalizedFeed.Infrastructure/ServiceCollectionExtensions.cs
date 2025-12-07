@@ -16,6 +16,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUserSignalsRepository, InMemoryUserSignalsRepository>();
         services.AddScoped<IVideoRepository, InMemoryVideoRepository>();
 
+        services.AddDistributedMemoryCache();
+
         return services;
     }
 }
