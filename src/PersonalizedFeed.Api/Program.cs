@@ -1,16 +1,24 @@
 using Azure.Messaging.ServiceBus;
 using PersonalizedFeed.Api.Messaging;
+using PersonalizedFeed.Api.SwaggerHelper;
 using PersonalizedFeed.Domain.Ranking;
 using PersonalizedFeed.Domain.Services;
 using PersonalizedFeed.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+var isDev = builder.Environment.IsDevelopment();
 
 builder.AddServiceDefaults();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    if (isDev)
+    {
+        options.OperationFilter<DefaultHeadersOperationFilter>();
+    }
+});
 
 // Domain services
 builder.Services.AddScoped<IFeedService, FeedService>();
